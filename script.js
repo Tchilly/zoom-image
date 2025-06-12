@@ -24,31 +24,61 @@ class FullscreenImageZoom {
         
         this.init();
     }
-    
-    init() {
+      init() {
         this.setupEventListeners();
-        this.calculateInitialScale();
-        this.updateTransform();
-        this.updateButtons();
+        
+        // Wait for image to load before calculating scale
+        if (this.imageElement.complete) {
+            this.calculateInitialScale();
+            this.updateTransform();
+            this.updateButtons();
+        } else {
+            this.imageElement.addEventListener('load', () => {
+                this.calculateInitialScale();
+                this.updateTransform();
+                this.updateButtons();
+            });
+        }
     }
-    
-    /**
+      /**
      * Determines the initial scale needed to make the image cover the entire viewport.
      * Works by comparing container and image dimensions, then picking the larger scale
      * factor to ensure no empty space around the image. This creates a "cover" effect
      * rather than "contain" which would leave black bars.
      */
     calculateInitialScale() {
-        const containerRect = this.container.getBoundingClientRect();
-        const imgRect = this.imageElement.getBoundingClientRect();
+        // Use window dimensions for more reliable mobile viewport
+        const containerWidth = window.innerWidth;
+        const containerHeight = window.innerHeight;
         
-        const scaleX = containerRect.width / imgRect.width;
-        const scaleY = containerRect.height / imgRect.height;
+        // Get natural image dimensions
+        const imgWidth = this.imageElement.naturalWidth;
+        const imgHeight = this.imageElement.naturalHeight;
+        
+        if (imgWidth === 0 || imgHeight === 0) {
+            // Image not loaded yet, set a fallback
+            this.initialScale = 1;
+            this.currentZoom = 1;
+            return;
+        }
+        
+        const scaleX = containerWidth / imgWidth;
+        const scaleY = containerHeight / imgHeight;
         
         // Use the larger scale to cover the screen
         this.initialScale = Math.max(scaleX, scaleY);
         this.currentZoom = this.initialScale;
-    }    
+        
+        console.log('Initial scale calculated:', {
+            containerWidth,
+            containerHeight,
+            imgWidth,
+            imgHeight,
+            scaleX,
+            scaleY,
+            initialScale: this.initialScale
+        });
+    }
     
     /**
      * Hooks up all the event listeners for desktop and mobile interactions.
@@ -92,9 +122,14 @@ class FullscreenImageZoom {
         this.container.addEventListener('touchstart', (e) => this.handleTouchStart(e));
         this.container.addEventListener('touchmove', (e) => this.handleTouchMove(e));
         this.container.addEventListener('touchend', (e) => this.handleTouchEnd(e));
-        
-        // Prevent context menu
+          // Prevent context menu
         this.container.addEventListener('contextmenu', (e) => e.preventDefault());
+        
+        // Handle viewport changes on mobile
+        window.addEventListener('resize', () => {
+            this.calculateInitialScale();
+            this.reset();
+        });
         
         this.preventBrowserZoom();
     }    
