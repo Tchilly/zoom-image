@@ -7,6 +7,7 @@ class FullscreenImageZoom {
         this.minZoom = 0.5;
         this.maxZoom = 5;
         this.zoomStep = 0.5;
+        this.absoluteMinZoom = 0.25; // Hard minimum to prevent extreme zoom out
         
         // State
         this.currentZoom = 1;
@@ -40,7 +41,8 @@ class FullscreenImageZoom {
             });
         }
     }
-      /**
+    
+    /**
      * Determines the initial scale needed to make the image cover the entire viewport.
      * Works by comparing container and image dimensions, then picking the larger scale
      * factor to ensure no empty space around the image. This creates a "cover" effect
@@ -69,6 +71,10 @@ class FullscreenImageZoom {
         this.initialScale = Math.max(scaleX, scaleY);
         this.currentZoom = this.initialScale;
         
+        // Adjust minZoom to ensure we can always zoom from initial scale
+        // Use the smaller of: configured minZoom or initialScale, but never below absoluteMinZoom
+        this.minZoom = Math.max(Math.min(0.5, this.initialScale), this.absoluteMinZoom);
+        
         console.log('Initial scale calculated:', {
             containerWidth,
             containerHeight,
@@ -76,7 +82,8 @@ class FullscreenImageZoom {
             imgHeight,
             scaleX,
             scaleY,
-            initialScale: this.initialScale
+            initialScale: this.initialScale,
+            adjustedMinZoom: this.minZoom
         });
     }
     
@@ -122,7 +129,8 @@ class FullscreenImageZoom {
         this.container.addEventListener('touchstart', (e) => this.handleTouchStart(e));
         this.container.addEventListener('touchmove', (e) => this.handleTouchMove(e));
         this.container.addEventListener('touchend', (e) => this.handleTouchEnd(e));
-          // Prevent context menu
+        
+        // Prevent context menu
         this.container.addEventListener('contextmenu', (e) => e.preventDefault());
         
         // Handle viewport changes on mobile
