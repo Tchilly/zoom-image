@@ -8,11 +8,40 @@ html, body {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
-
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
+    background-color: #000;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+}
+
+/* Image container - fullscreen */
+.image-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #000;
+    overflow: hidden;
+}
+
+.image-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transform-origin: center center;
+    transition: transform 0.2s ease-out;
+    cursor: grab;
+}
+
+.image-container img:active {
+    cursor: grabbing;
 }
 
 /* Close button - top right */
@@ -67,6 +96,11 @@ html, body {
 
 .zoom-btn:hover {
     background: rgba(0, 0, 0, 0.9);
+}
+
+.zoom-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .reset-btn {
