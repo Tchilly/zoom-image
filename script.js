@@ -48,8 +48,7 @@ class FullscreenImageZoom {
         // Use the larger scale to cover the screen
         this.initialScale = Math.max(scaleX, scaleY);
         this.currentZoom = this.initialScale;
-    }
-      /**
+    }    /**
      * Hooks up all the event listeners for desktop and mobile interactions.
      * We're using event delegation and capturing patterns to handle everything from
      * button clicks to complex touch gestures. The key here is attaching mouse events
@@ -78,6 +77,9 @@ class FullscreenImageZoom {
             this.close();
         });
         
+        // Keyboard navigation support
+        document.addEventListener('keydown', (e) => this.handleKeyboard(e));
+        
         // Mouse events for desktop - attach to container, not image
         this.container.addEventListener('mousedown', (e) => this.startDrag(e));
         document.addEventListener('mousemove', (e) => this.drag(e));
@@ -93,8 +95,7 @@ class FullscreenImageZoom {
         this.container.addEventListener('contextmenu', (e) => e.preventDefault());
         
         this.preventBrowserZoom();
-    }
-      /**
+    }    /**
      * Blocks browser-level zoom commands that would interfere with our custom zoom.
      * We intercept both keyboard shortcuts (Ctrl+/-/0) and wheel+modifier combos.
      * The passive:false is crucial here - without it, preventDefault won't work on wheel events.
@@ -111,6 +112,57 @@ class FullscreenImageZoom {
                 e.preventDefault();
             }
         }, { passive: false });
+    }
+    
+    /**
+     * Handles keyboard navigation and shortcuts for accessibility.
+     * Supports standard zoom shortcuts and navigation keys.
+     * @param {KeyboardEvent} e - The keyboard event
+     */
+    handleKeyboard(e) {
+        switch(e.key) {
+            case '+':
+            case '=':
+                e.preventDefault();
+                this.zoomIn();
+                break;
+            case '-':
+                e.preventDefault();
+                this.zoomOut();
+                break;
+            case '0':
+                e.preventDefault();
+                this.reset();
+                break;
+            case 'Escape':
+                e.preventDefault();
+                this.close();
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                this.translateX += 50;
+                this.updateTransform();
+                this.announcePosition();
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                this.translateX -= 50;
+                this.updateTransform();
+                this.announcePosition();
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                this.translateY += 50;
+                this.updateTransform();
+                this.announcePosition();
+                break;
+            case 'ArrowDown':
+                e.preventDefault();
+                this.translateY -= 50;
+                this.updateTransform();
+                this.announcePosition();
+                break;
+        }
     }
       /**
      * Initiates mouse drag for desktop panning. We calculate the offset between cursor
@@ -238,16 +290,17 @@ class FullscreenImageZoom {
             e.touches[0].clientY - e.touches[1].clientY
         );
     }
-    
-    // Zoom functions
+      // Zoom functions
     zoomIn() {
         const newZoom = Math.min(this.currentZoom + this.zoomStep, this.maxZoom);
         this.setZoom(newZoom);
+        this.announceZoom();
     }
     
     zoomOut() {
         const newZoom = Math.max(this.currentZoom - this.zoomStep, this.minZoom);
         this.setZoom(newZoom);
+        this.announceZoom();
     }
     
     setZoom(zoom) {
@@ -279,13 +332,13 @@ class FullscreenImageZoom {
         this.updateTransform();
         this.updateButtons();
     }
-    
-    reset() {
+      reset() {
         this.currentZoom = this.initialScale;
         this.translateX = 0;
         this.translateY = 0;
         this.updateTransform();
         this.updateButtons();
+        this.announceZoom();
     }
     
     close() {
@@ -305,6 +358,25 @@ class FullscreenImageZoom {
         
         zoomInBtn.disabled = this.currentZoom >= this.maxZoom;
         zoomOutBtn.disabled = this.currentZoom <= this.minZoom;
+    }
+    
+    /**
+     * Announces zoom level changes to screen readers for accessibility.
+     * Converts the zoom value to a percentage and announces it in Swedish.
+     */
+    announceZoom() {
+        const announcer = document.getElementById('zoom-announcer');
+        const percentage = Math.round((this.currentZoom / this.initialScale) * 100);
+        announcer.textContent = `Zoom: ${percentage}%`;
+    }
+    
+    /**
+     * Announces position changes when navigating with arrow keys.
+     * Provides feedback for keyboard users about image position.
+     */
+    announcePosition() {
+        const announcer = document.getElementById('zoom-announcer');
+        announcer.textContent = 'Bildposition ändrad';
     }
 }
 
