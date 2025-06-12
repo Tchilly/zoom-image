@@ -1,4 +1,16 @@
+/**
+ * FullscreenImageZoom provides intuitive image zoom and pan functionality
+ * with support for both desktop and mobile interactions.
+ */
 class FullscreenImageZoom {
+    /**
+     * Create a new fullscreen image zoom instance.
+     * 
+     * Initializes the zoom component with Swedish design system styling
+     * and sets up all necessary state for desktop and mobile interactions.
+     * 
+     * @constructor
+     */
     constructor() {
         this.imageElement = document.querySelector('.image-container img');
         this.container = document.querySelector('.image-container');
@@ -14,14 +26,16 @@ class FullscreenImageZoom {
         this.translateX = 0;
         this.translateY = 0;
         this.initialScale = 1;
-          // Touch/drag state
+        
+        // Touch/drag state
         this.isDragging = false;
         this.startX = 0;
         this.startY = 0;
         this.lastTouchDistance = 0;
         this.touchStartX = 0;
         this.touchStartY = 0;
-          // Pinch gesture state
+        
+        // Pinch gesture state
         this.initialPinchCenter = { x: 0, y: 0 };
         this.initialPinchImagePercent = { x: 0.5, y: 0.5 };
         this.initialPinchZoom = 1;
@@ -29,7 +43,16 @@ class FullscreenImageZoom {
         
         this.init();
     }
-      init() {
+
+    /**
+     * Initialize the zoom component.
+     * 
+     * Sets up event listeners and calculates the initial image scale
+     * to ensure proper display across different screen sizes.
+     * 
+     * @return {void}
+     */
+    init() {
         this.setupEventListeners();
         
         // Wait for image to load before calculating scale
@@ -45,12 +68,15 @@ class FullscreenImageZoom {
             });
         }
     }
-    
+      
     /**
-     * Determines the initial scale needed to make the image cover the entire viewport.
-     * Works by comparing container and image dimensions, then picking the larger scale
-     * factor to ensure no empty space around the image. This creates a "cover" effect
-     * rather than "contain" which would leave black bars.
+     * Calculate the initial scale to make image cover viewport.
+     * 
+     * Determines the scale factor needed to ensure the image fills
+     * the entire viewport without letterboxing (black bars).
+     * Uses the larger of width/height scale ratios.
+     * 
+     * @return {void}
      */
     calculateInitialScale() {
         // Use window dimensions for more reliable mobile viewport
@@ -79,23 +105,16 @@ class FullscreenImageZoom {
         // Use the smaller of: configured minZoom or initialScale, but never below absoluteMinZoom
         this.minZoom = Math.max(Math.min(0.5, this.initialScale), this.absoluteMinZoom);
         
-        console.log('Initial scale calculated:', {
-            containerWidth,
-            containerHeight,
-            imgWidth,
-            imgHeight,
-            scaleX,
-            scaleY,
-            initialScale: this.initialScale,
-            adjustedMinZoom: this.minZoom
-        });
     }
     
     /**
-     * Hooks up all the event listeners for desktop and mobile interactions.
-     * We're using event delegation and capturing patterns to handle everything from
-     * button clicks to complex touch gestures. The key here is attaching mouse events
-     * to the document level so we can track drags even when the cursor leaves the container.
+     * Set up all event listeners for desktop and mobile interactions.
+     * 
+     * Configures button clicks, keyboard shortcuts, mouse events,
+     * touch gestures, and accessibility features. Mouse events are
+     * attached at document level to track drags outside container.
+     * 
+     * @return {void}
      */
     setupEventListeners() {
         const zoomInBtn = document.querySelector('.zoom-controls .zoom-btn:first-child');
@@ -147,9 +166,13 @@ class FullscreenImageZoom {
     }    
     
     /**
-     * Blocks browser-level zoom commands that would interfere with our custom zoom.
-     * We intercept both keyboard shortcuts (Ctrl+/-/0) and wheel+modifier combos.
-     * The passive:false is crucial here - without it, preventDefault won't work on wheel events.
+     * Prevent browser zoom shortcuts from interfering.
+     * 
+     * Blocks Ctrl+/-/0 keyboard shortcuts and Ctrl+wheel events
+     * to prevent browser zoom from conflicting with custom zoom.
+     * Uses passive:false to enable preventDefault on wheel events.
+     * 
+     * @return {void}
      */
     preventBrowserZoom() {
         document.addEventListener('keydown', (e) => {
@@ -166,9 +189,14 @@ class FullscreenImageZoom {
     }
     
     /**
-     * Handles keyboard navigation and shortcuts for accessibility.
-     * Supports standard zoom shortcuts and navigation keys.
-     * @param {KeyboardEvent} e - The keyboard event
+     * Handle keyboard navigation and accessibility shortcuts.
+     * 
+     * Supports zoom shortcuts (+, -, 0), navigation arrows,
+     * and escape key. Provides screen reader announcements
+     * for accessibility compliance.
+     * 
+     * @param {KeyboardEvent} e - The keyboard event object
+     * @return {void}
      */
     handleKeyboard(e) {
         switch(e.key) {
@@ -217,10 +245,14 @@ class FullscreenImageZoom {
     }
     
     /**
-     * Initiates mouse drag for desktop panning. We calculate the offset between cursor
-     * position and current translation to maintain smooth dragging regardless of where
-     * you click on the image. Uses element event delegation to avoid button conflicts.
-     * @param {MouseEvent} e - The mousedown event
+     * Initiate mouse drag for desktop panning.
+     * 
+     * Calculates the offset between cursor position and current
+     * translation to maintain smooth dragging behavior regardless
+     * of click position. Excludes button elements from drag events.
+     * 
+     * @param {MouseEvent} e - The mouse down event object
+     * @return {void}
      */
     startDrag(e) {
         // Don't start drag if clicking on buttons
@@ -238,10 +270,13 @@ class FullscreenImageZoom {
     }
     
     /**
-     * Handles mouse movement during drag operation. The math here subtracts the
-     * initial click offset to make dragging feel natural - as if you grabbed the
-     * exact spot you clicked on and it sticks to your cursor.
-     * @param {MouseEvent} e - The mousemove event
+     * Handle mouse movement during drag operation.
+     * 
+     * Updates image translation based on cursor movement while
+     * maintaining the initial click offset for natural dragging feel.
+     * 
+     * @param {MouseEvent} e - The mouse move event object
+     * @return {void}
      */
     drag(e) {
         if (!this.isDragging) return;
@@ -252,6 +287,15 @@ class FullscreenImageZoom {
         this.updateTransform();
     }
     
+    /**
+     * End mouse drag operation.
+     * 
+     * Cleans up drag state, removes visual indicators,
+     * and restores default cursor.
+     * 
+     * @param {MouseEvent} e - The mouse up event object
+     * @return {void}
+     */
     endDrag(e) {
         if (!this.isDragging) return;
         
@@ -261,10 +305,14 @@ class FullscreenImageZoom {
     }
     
     /**
-     * Mouse wheel zoom handler that translates wheel movement into zoom changes.
-     * We invert the deltaY because wheel down should zoom out (negative delta = zoom out).
-     * The zoom happens at the cursor position for intuitive zooming behavior.
-     * @param {WheelEvent} e - The wheel event
+     * Handle mouse wheel zoom with cursor tracking.
+     * 
+     * Translates wheel movement into zoom changes, with zoom
+     * occurring at the cursor position for intuitive behavior.
+     * Inverts deltaY so wheel down zooms out.
+     * 
+     * @param {WheelEvent} e - The wheel event object
+     * @return {void}
      */
     handleWheel(e) {
         e.preventDefault();
@@ -274,10 +322,14 @@ class FullscreenImageZoom {
     }
     
     /**
-     * Handles the start of touch interactions on mobile devices. Single finger initiates
-     * panning, while two fingers start a pinch gesture. We store the midpoint between
-     * fingers and initial distance to calculate scaling during movement.
-     * @param {TouchEvent} e - The touchstart event
+     * Handle touch start for mobile panning and pinch gestures.
+     * 
+     * Single finger initiates panning, two fingers start pinch-to-zoom.
+     * Stores initial touch state and converts pinch center to image
+     * percentage coordinates for accurate zoom tracking.
+     * 
+     * @param {TouchEvent} e - The touch start event object
+     * @return {void}
      */
     handleTouchStart(e) {
         // Don't handle touch on buttons
@@ -312,19 +364,26 @@ class FullscreenImageZoom {
     }    
     
     /**
-     * Processes touch movement for either panning or pinch-to-zoom. For pinching,
-     * we use the initial pinch state to maintain consistent zoom center throughout
-     * the entire gesture, similar to how iPhone handles pinch-to-zoom.
-     * @param {TouchEvent} e - The touchmove event
+     * Handle touch movement for panning and pinch-to-zoom.
+     * 
+     * Processes single-finger panning or two-finger pinch gestures.
+     * Uses initial pinch state to maintain consistent zoom center
+     * throughout the gesture, similar to iPhone behavior.
+     * 
+     * @param {TouchEvent} e - The touch move event object
+     * @return {void}
      */
     handleTouchMove(e) {
+        // Single touch - pan
         if (e.touches.length === 1 && this.isDragging) {
-            // Single touch - pan
             e.preventDefault();
             this.translateX = e.touches[0].clientX - this.startX;
             this.translateY = e.touches[0].clientY - this.startY;
-            this.updateTransform();        } else if (e.touches.length === 2) {
-            // Two finger pinch
+            this.updateTransform();       
+            
+        // Two finger pinch    
+        } else if (e.touches.length === 2) {
+            
             e.preventDefault();
             
             const currentDistance = this.getTouchDistance(e);
@@ -362,11 +421,29 @@ class FullscreenImageZoom {
         }
     }
     
+    /**
+     * End touch interaction and clean up state.
+     * 
+     * Resets drag state and removes visual indicators
+     * when touch interaction completes.
+     * 
+     * @param {TouchEvent} e - The touch end event object
+     * @return {void}
+     */
     handleTouchEnd(e) {
         this.isDragging = false;
         this.imageElement.classList.remove('dragging');
     }
     
+    /**
+     * Calculate distance between two touch points.
+     * 
+     * Uses Pythagorean theorem to determine the distance
+     * between two fingers for pinch gesture scaling.
+     * 
+     * @param {TouchEvent} e - Touch event with at least 2 touches
+     * @return {number} Distance between touch points in pixels
+     */
     getTouchDistance(e) {
         return Math.hypot(
             e.touches[0].clientX - e.touches[1].clientX,
@@ -374,19 +451,43 @@ class FullscreenImageZoom {
         );
     }
     
-    // Zoom functions
+    /**
+     * Zoom in by configured step amount.
+     * 
+     * Increases zoom level by zoomStep while respecting
+     * maximum zoom limits. Announces change for accessibility.
+     * 
+     * @return {void}
+     */
     zoomIn() {
         const newZoom = Math.min(this.currentZoom + this.zoomStep, this.maxZoom);
         this.setZoom(newZoom);
         this.announceZoom();
     }
     
+    /**
+     * Zoom out by configured step amount.
+     * 
+     * Decreases zoom level by zoomStep while respecting
+     * minimum zoom limits. Announces change for accessibility.
+     * 
+     * @return {void}
+     */
     zoomOut() {
         const newZoom = Math.max(this.currentZoom - this.zoomStep, this.minZoom);
         this.setZoom(newZoom);
         this.announceZoom();
     }
     
+    /**
+     * Set zoom level to specific value.
+     * 
+     * Updates the current zoom level and refreshes
+     * the transform and button states accordingly.
+     * 
+     * @param {number} zoom - The target zoom level
+     * @return {void}
+     */
     setZoom(zoom) {
         this.currentZoom = zoom;
         this.updateTransform();
@@ -394,12 +495,15 @@ class FullscreenImageZoom {
     }    
     
     /**
-     * Converts screen coordinates to image-relative coordinates (0-1 range).
-     * This accounts for current zoom and translation to find what percentage 
-     * of the image the user is pointing at.
+     * Convert screen coordinates to image percentage coordinates.
+     * 
+     * Transforms screen-space coordinates to image-relative percentages (0-1)
+     * by accounting for current zoom and translation. This enables accurate
+     * zoom-to-point functionality regardless of current image state.
+     * 
      * @param {number} clientX - Screen X coordinate
      * @param {number} clientY - Screen Y coordinate
-     * @returns {Object} - {x, y} as percentages (0-1) of image dimensions
+     * @return {Object} Coordinates as percentages: {x: number, y: number}
      */
     screenToImagePercent(clientX, clientY) {
         const rect = this.container.getBoundingClientRect();
@@ -423,13 +527,18 @@ class FullscreenImageZoom {
     }
     
     /**
-     * Converts image percentage coordinates back to screen coordinates.
-     * @param {number} percentX - X percentage (0-1) of image
-     * @param {number} percentY - Y percentage (0-1) of image
+     * Convert image percentage coordinates back to screen coordinates.
+     * 
+     * Transforms image-relative percentages to screen-space coordinates
+     * using specified zoom and translation values. Used for positioning
+     * calculations during zoom operations.
+     * 
+     * @param {number} percentX - X percentage (0-1) of image width
+     * @param {number} percentY - Y percentage (0-1) of image height
      * @param {number} zoom - Zoom level to use for calculation
-     * @param {number} translateX - Translation X to use
-     * @param {number} translateY - Translation Y to use
-     * @returns {Object} - {x, y} screen coordinates relative to container center
+     * @param {number} translateX - X translation to apply
+     * @param {number} translateY - Y translation to apply
+     * @return {Object} Screen coordinates relative to container center: {x: number, y: number}
      */
     imagePercentToScreen(percentX, percentY, zoom, translateX, translateY) {
         const imgWidth = this.imageElement.naturalWidth;
@@ -444,15 +553,19 @@ class FullscreenImageZoom {
         const screenY = (imageY * zoom) + translateY;
         
         return { x: screenX, y: screenY };
-    }
-
+    }    
+    
     /**
-     * This is where the zoom-to-point magic happens. We calculate the image percentage
-     * that the user is pointing at, then adjust zoom and translation to keep that
-     * exact spot under their pointer/finger.
-     * @param {number} clientX - X coordinate of zoom origin (screen space)
-     * @param {number} clientY - Y coordinate of zoom origin (screen space)
-     * @param {number} deltaZoom - Amount to zoom in/out
+     * Zoom to a specific point with percentage-based coordinate tracking.
+     * 
+     * Implements precise zoom-to-point functionality by converting screen
+     * coordinates to image percentages, applying zoom change, then repositioning
+     * to keep the same image area under the cursor/finger.
+     * 
+     * @param {number} clientX - X coordinate of zoom origin in screen space
+     * @param {number} clientY - Y coordinate of zoom origin in screen space
+     * @param {number} deltaZoom - Amount to zoom in (+) or out (-)
+     * @return {void}
      */
     zoomToPoint(clientX, clientY, deltaZoom) {
         // Convert screen coordinates to image percentage
@@ -485,7 +598,16 @@ class FullscreenImageZoom {
         this.updateTransform();
         this.updateButtons();
     }
-      reset() {
+    
+    /**
+     * Reset zoom and position to initial state.
+     * 
+     * Restores the image to its initial scale and centered position,
+     * effectively returning to the default view state.
+     * 
+     * @return {void}
+     */
+    reset() {
         this.currentZoom = this.initialScale;
         this.translateX = 0;
         this.translateY = 0;
@@ -494,16 +616,40 @@ class FullscreenImageZoom {
         this.announceZoom();
     }
     
+    /**
+     * Close the fullscreen image viewer.
+     * 
+     * Attempts to close the current window/tab. In production,
+     * this might trigger a modal close or navigation event.
+     * 
+     * @return {void}
+     */
     close() {
         // This closes the fullscreen view.
         window.close();
     }
     
+    /**
+     * Apply current zoom and translation to image element.
+     * 
+     * Updates the CSS transform property with current translation
+     * and scale values to visually update the image position.
+     * 
+     * @return {void}
+     */
     updateTransform() {
         const transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.currentZoom})`;
         this.imageElement.style.transform = transform;
     }
     
+    /**
+     * Update zoom control button states.
+     * 
+     * Enables/disables zoom in and zoom out buttons based on
+     * current zoom level relative to min/max limits.
+     * 
+     * @return {void}
+     */
     updateButtons() {
         const zoomInBtn = document.querySelector('.zoom-controls .zoom-btn:first-child');
         const zoomOutBtn = document.querySelector('.zoom-controls .zoom-btn:nth-child(2)');
@@ -513,8 +659,12 @@ class FullscreenImageZoom {
     }
     
     /**
-     * Announces zoom level changes to screen readers for accessibility.
-     * Converts the zoom value to a percentage and announces it in Swedish.
+     * Announce zoom level changes for screen readers.
+     * 
+     * Converts current zoom to percentage relative to initial scale
+     * and announces it in Swedish for accessibility compliance.
+     * 
+     * @return {void}
      */
     announceZoom() {
         const announcer = document.getElementById('zoom-announcer');
@@ -523,8 +673,12 @@ class FullscreenImageZoom {
     }
     
     /**
-     * Announces position changes when navigating with arrow keys.
-     * Provides feedback for keyboard users about image position.
+     * Announce position changes for keyboard navigation.
+     * 
+     * Provides Swedish language feedback to screen readers
+     * when users navigate with arrow keys for accessibility.
+     * 
+     * @return {void}
      */
     announcePosition() {
         const announcer = document.getElementById('zoom-announcer');
@@ -532,7 +686,12 @@ class FullscreenImageZoom {
     }
 }
 
-// Initialize when DOM is loaded
+/**
+ * Initialize the fullscreen image zoom when DOM is ready.
+ * 
+ * Creates a new FullscreenImageZoom instance once the document
+ * has finished loading to ensure all elements are available.
+ */
 document.addEventListener('DOMContentLoaded', () => {
     new FullscreenImageZoom();
 });
