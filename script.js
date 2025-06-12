@@ -449,18 +449,22 @@ class FullscreenImageZoom {
             e.touches[0].clientY - e.touches[1].clientY
         );
     }
-    
-    /**
+      /**
      * Zoom in by configured step amount.
      * 
      * Increases zoom level by zoomStep while respecting
-     * maximum zoom limits. Announces change for accessibility.
+     * maximum zoom limits. Zooms toward the center of the viewport.
+     * Announces change for accessibility.
      * 
      * @return {void}
      */
     zoomIn() {
-        const newZoom = Math.min(this.currentZoom + this.zoomStep, this.maxZoom);
-        this.setZoom(newZoom);
+        // Calculate viewport center coordinates
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        
+        // Use zoomToPoint to zoom toward viewport center
+        this.zoomToPoint(centerX, centerY, this.zoomStep);
         this.announceZoom();
     }
     
@@ -468,13 +472,18 @@ class FullscreenImageZoom {
      * Zoom out by configured step amount.
      * 
      * Decreases zoom level by zoomStep while respecting
-     * minimum zoom limits. Announces change for accessibility.
+     * minimum zoom limits. Zooms away from the center of the viewport.
+     * Announces change for accessibility.
      * 
      * @return {void}
      */
     zoomOut() {
-        const newZoom = Math.max(this.currentZoom - this.zoomStep, this.minZoom);
-        this.setZoom(newZoom);
+        // Calculate viewport center coordinates
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        
+        // Use zoomToPoint to zoom away from viewport center
+        this.zoomToPoint(centerX, centerY, -this.zoomStep);
         this.announceZoom();
     }
     
@@ -626,7 +635,8 @@ class FullscreenImageZoom {
         // This closes the fullscreen view.
         window.close();
     }
-      /**
+      
+    /**
      * Calculate the allowed translation bounds based on current zoom level.
      * 
      * Determines the maximum and minimum translation values that will keep
@@ -635,7 +645,8 @@ class FullscreenImageZoom {
      * allows panning but prevents image from going completely out of bounds.
      * 
      * @return {Object} Bounds object: {minX, maxX, minY, maxY}
-     */    calculateBounds() {
+     */    
+    calculateBounds() {
         // Get container dimensions
         const containerWidth = window.innerWidth;
         const containerHeight = window.innerHeight;
