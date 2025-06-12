@@ -48,7 +48,9 @@ class FullscreenImageZoom {
         // Use the larger scale to cover the screen
         this.initialScale = Math.max(scaleX, scaleY);
         this.currentZoom = this.initialScale;
-    }    /**
+    }    
+    
+    /**
      * Hooks up all the event listeners for desktop and mobile interactions.
      * We're using event delegation and capturing patterns to handle everything from
      * button clicks to complex touch gestures. The key here is attaching mouse events
@@ -95,7 +97,9 @@ class FullscreenImageZoom {
         this.container.addEventListener('contextmenu', (e) => e.preventDefault());
         
         this.preventBrowserZoom();
-    }    /**
+    }    
+    
+    /**
      * Blocks browser-level zoom commands that would interfere with our custom zoom.
      * We intercept both keyboard shortcuts (Ctrl+/-/0) and wheel+modifier combos.
      * The passive:false is crucial here - without it, preventDefault won't work on wheel events.
@@ -164,7 +168,8 @@ class FullscreenImageZoom {
                 break;
         }
     }
-      /**
+    
+    /**
      * Initiates mouse drag for desktop panning. We calculate the offset between cursor
      * position and current translation to maintain smooth dragging regardless of where
      * you click on the image. Uses element event delegation to avoid button conflicts.
@@ -207,7 +212,8 @@ class FullscreenImageZoom {
         this.imageElement.classList.remove('dragging');
         document.body.style.cursor = '';
     }
-      /**
+    
+    /**
      * Mouse wheel zoom handler that translates wheel movement into zoom changes.
      * We invert the deltaY because wheel down should zoom out (negative delta = zoom out).
      * The zoom happens at the cursor position for intuitive zooming behavior.
@@ -219,7 +225,8 @@ class FullscreenImageZoom {
         const delta = e.deltaY > 0 ? -this.zoomStep : this.zoomStep;
         this.zoomToPoint(e.clientX, e.clientY, delta);
     }
-      /**
+    
+    /**
      * Handles the start of touch interactions on mobile devices. Single finger initiates
      * panning, while two fingers start a pinch gesture. We store the midpoint between
      * fingers and initial distance to calculate scaling during movement.
@@ -290,7 +297,8 @@ class FullscreenImageZoom {
             e.touches[0].clientY - e.touches[1].clientY
         );
     }
-      // Zoom functions
+    
+    // Zoom functions
     zoomIn() {
         const newZoom = Math.min(this.currentZoom + this.zoomStep, this.maxZoom);
         this.setZoom(newZoom);
@@ -308,7 +316,8 @@ class FullscreenImageZoom {
         this.updateTransform();
         this.updateButtons();
     }
-      /**
+    
+    /**
      * This is where the zoom-to-point magic happens. We calculate the offset from
      * the zoom point to the center, then adjust our translation to keep that point
      * visually stable during zoom. It's like pinning a spot on the image while
@@ -342,8 +351,7 @@ class FullscreenImageZoom {
     }
     
     close() {
-        // You can implement close functionality here
-        // For example, redirect to another page or hide the viewer
+        // This closes the fullscreen view.
         console.log('Close fullscreen');
     }
     
