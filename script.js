@@ -352,7 +352,7 @@ class FullscreenImageZoom {
     
     close() {
         // This closes the fullscreen view.
-        console.log('Close fullscreen');
+        window.close();
     }
     
     updateTransform() {
