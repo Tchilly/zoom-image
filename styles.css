@@ -54,23 +54,56 @@ html, body {
     position: fixed;
     top: 10px;
     right: 10px;
-    height: 44px;
-    background: rgba(0, 0, 0, 0.7);
-    border: none;
-    border-radius: 8px;
-    color: white;
+    height: 3rem;
+    background-color: #006ebf;
+    color: #fff;
+    z-index: 1000;
+    font-weight: bold;
     cursor: pointer;
+    padding: 0;
+    border: none;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    font-size: 16px;
-    font-family: Arial, sans-serif;
-    z-index: 1000;
 }
 
+.close-btn span {
+    font-size: 1rem;
+    font-weight: normal;
+    line-height: 1.5rem;
+    padding: .75rem 1rem;
+    font-family: "Stockholm Type", Arial, sans-serif;
+    background-color: #006ebf;
+}
+
+@media screen and (max-width: 767px) {
+    .close-btn span {
+        display: none;
+    }
+}
+
+.close-btn svg {
+    background-color: #333;
+    height: 3rem;
+    width: 3rem;
+    padding: 12px;
+    box-sizing: border-box;
+    overflow: hidden;
+    fill: currentColor;
+    display: inline-block;
+    flex-shrink: 0;
+    pointer-events: none;
+}
+
+.close-btn:focus,
 .close-btn:hover {
-    background: rgba(0, 0, 0, 0.9);
+    color: #fff !important;
+    text-decoration: underline;
+    text-decoration-color: #fff !important;
+}
+
+.close-btn:focus {
+    outline: .125rem solid #fff;
+    outline-offset: .0625rem;
 }
 
 /* Zoom controls - bottom center */
@@ -85,41 +118,57 @@ html, body {
 }
 
 .zoom-btn {
-    height: 44px;
-    background: rgba(0, 0, 0, 0.7);
+    height: 3rem;
+    background-color: #006ebf;
     border: none;
-    border-radius: 8px;
-    color: white;
+    color: #fff;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 10px;
-    font-size: 16px;
-    font-family: Arial, sans-serif;
+    padding: 0;
+    font-size: 1rem;
+    font-family: "Stockholm Type", Arial, sans-serif;
+    font-weight: bold;
 }
 
 .zoom-btn:hover:not(:disabled) {
-    background: rgba(0, 0, 0, 0.9);
+    color: #fff !important;
+    text-decoration: underline;
+    text-decoration-color: #fff !important;
+}
+
+.zoom-btn:focus {
+    outline: .125rem solid #fff;
+    outline-offset: .0625rem;
 }
 
 .zoom-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    background: rgba(0, 0, 0, 0.5);
+}
+
+.zoom-btn svg {
+    background-color: #333;
+    height: 3rem;
+    width: 3rem;
+    padding: 12px;
+    box-sizing: border-box;
+    overflow: hidden;
+    fill: currentColor;
+    display: inline-block;
+    flex-shrink: 0;
+    pointer-events: none;
 }
 
 .reset-btn {
-    gap: 8px;
-    padding: 10px 16px;
+    padding: .75rem 1rem;
+    background-color: #333;
 }
 
-/* Ensure buttons are above other content */
-.close-btn svg,
-.zoom-btn svg {
-    width: 24px;
-    height: 24px;
-    flex-shrink: 0;
+.reset-btn span {
+    font-weight: normal;
+    line-height: 1.5rem;
 }
 
 /* Prevent dragging on buttons */
