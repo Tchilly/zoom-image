@@ -1,0 +1,83 @@
+/* Prevent all zoom and touch actions */
+html, body {
+    touch-action: none;
+    -ms-touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+}
+
+/* Close button - top right */
+.close-btn {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    height: 44px;
+    background: rgba(0, 0, 0, 0.7);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    font-size: 16px;
+    font-family: Arial, sans-serif;
+    z-index: 1000;
+}
+
+.close-btn:hover {
+    background: rgba(0, 0, 0, 0.9);
+}
+
+/* Zoom controls - bottom center */
+.zoom-controls {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 1000;
+}
+
+.zoom-btn {
+    height: 44px;
+    background: rgba(0, 0, 0, 0.7);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    font-size: 16px;
+    font-family: Arial, sans-serif;
+}
+
+.zoom-btn:hover {
+    background: rgba(0, 0, 0, 0.9);
+}
+
+.reset-btn {
+    gap: 8px;
+    padding: 10px 16px;
+}
+
+/* Ensure buttons are above other content */
+.close-btn svg,
+.zoom-btn svg {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
