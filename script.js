@@ -32,8 +32,13 @@ class FullscreenImageZoom {
         this.updateButtons();
     }
     
+    /**
+     * Determines the initial scale needed to make the image cover the entire viewport.
+     * Works by comparing container and image dimensions, then picking the larger scale
+     * factor to ensure no empty space around the image. This creates a "cover" effect
+     * rather than "contain" which would leave black bars.
+     */
     calculateInitialScale() {
-        // Calculate scale to fit/cover the screen
         const containerRect = this.container.getBoundingClientRect();
         const imgRect = this.imageElement.getBoundingClientRect();
         
@@ -44,9 +49,13 @@ class FullscreenImageZoom {
         this.initialScale = Math.max(scaleX, scaleY);
         this.currentZoom = this.initialScale;
     }
-    
+      /**
+     * Hooks up all the event listeners for desktop and mobile interactions.
+     * We're using event delegation and capturing patterns to handle everything from
+     * button clicks to complex touch gestures. The key here is attaching mouse events
+     * to the document level so we can track drags even when the cursor leaves the container.
+     */
     setupEventListeners() {
-        // Button events
         const zoomInBtn = document.querySelector('.zoom-controls .zoom-btn:first-child');
         const zoomOutBtn = document.querySelector('.zoom-controls .zoom-btn:nth-child(2)');
         const resetBtn = document.querySelector('.reset-btn');
@@ -74,10 +83,8 @@ class FullscreenImageZoom {
         document.addEventListener('mousemove', (e) => this.drag(e));
         document.addEventListener('mouseup', (e) => this.endDrag(e));
         
-        // Wheel zoom for desktop
         this.container.addEventListener('wheel', (e) => this.handleWheel(e));
         
-        // Touch events for mobile
         this.container.addEventListener('touchstart', (e) => this.handleTouchStart(e));
         this.container.addEventListener('touchmove', (e) => this.handleTouchMove(e));
         this.container.addEventListener('touchend', (e) => this.handleTouchEnd(e));
@@ -85,10 +92,13 @@ class FullscreenImageZoom {
         // Prevent context menu
         this.container.addEventListener('contextmenu', (e) => e.preventDefault());
         
-        // Prevent browser zoom
         this.preventBrowserZoom();
     }
-    
+      /**
+     * Blocks browser-level zoom commands that would interfere with our custom zoom.
+     * We intercept both keyboard shortcuts (Ctrl+/-/0) and wheel+modifier combos.
+     * The passive:false is crucial here - without it, preventDefault won't work on wheel events.
+     */
     preventBrowserZoom() {
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '-' || e.key === '0')) {
@@ -102,8 +112,12 @@ class FullscreenImageZoom {
             }
         }, { passive: false });
     }
-    
-    // Desktop mouse drag
+      /**
+     * Initiates mouse drag for desktop panning. We calculate the offset between cursor
+     * position and current translation to maintain smooth dragging regardless of where
+     * you click on the image. Uses element event delegation to avoid button conflicts.
+     * @param {MouseEvent} e - The mousedown event
+     */
     startDrag(e) {
         // Don't start drag if clicking on buttons
         if (e.target.closest('.close-btn') || e.target.closest('.zoom-controls')) {
@@ -119,6 +133,12 @@ class FullscreenImageZoom {
         document.body.style.cursor = 'grabbing';
     }
     
+    /**
+     * Handles mouse movement during drag operation. The math here subtracts the
+     * initial click offset to make dragging feel natural - as if you grabbed the
+     * exact spot you clicked on and it sticks to your cursor.
+     * @param {MouseEvent} e - The mousemove event
+     */
     drag(e) {
         if (!this.isDragging) return;
         
@@ -135,16 +155,24 @@ class FullscreenImageZoom {
         this.imageElement.classList.remove('dragging');
         document.body.style.cursor = '';
     }
-    
-    // Desktop wheel zoom
+      /**
+     * Mouse wheel zoom handler that translates wheel movement into zoom changes.
+     * We invert the deltaY because wheel down should zoom out (negative delta = zoom out).
+     * The zoom happens at the cursor position for intuitive zooming behavior.
+     * @param {WheelEvent} e - The wheel event
+     */
     handleWheel(e) {
         e.preventDefault();
         
         const delta = e.deltaY > 0 ? -this.zoomStep : this.zoomStep;
         this.zoomToPoint(e.clientX, e.clientY, delta);
     }
-    
-    // Touch events for mobile
+      /**
+     * Handles the start of touch interactions on mobile devices. Single finger initiates
+     * panning, while two fingers start a pinch gesture. We store the midpoint between
+     * fingers and initial distance to calculate scaling during movement.
+     * @param {TouchEvent} e - The touchstart event
+     */
     handleTouchStart(e) {
         // Don't handle touch on buttons
         if (e.target.closest('.close-btn') || e.target.closest('.zoom-controls')) {
@@ -169,6 +197,12 @@ class FullscreenImageZoom {
         }
     }
     
+    /**
+     * Processes touch movement for either panning or pinch-to-zoom. For pinching,
+     * we continuously calculate the distance ratio between fingers to determine
+     * zoom level, and use the midpoint between fingers as the zoom origin.
+     * @param {TouchEvent} e - The touchmove event
+     */
     handleTouchMove(e) {
         if (e.touches.length === 1 && this.isDragging) {
             // Single touch - pan
@@ -221,7 +255,15 @@ class FullscreenImageZoom {
         this.updateTransform();
         this.updateButtons();
     }
-    
+      /**
+     * This is where the zoom-to-point magic happens. We calculate the offset from
+     * the zoom point to the center, then adjust our translation to keep that point
+     * visually stable during zoom. It's like pinning a spot on the image while
+     * everything else scales around it.
+     * @param {number} clientX - X coordinate of zoom origin (screen space)
+     * @param {number} clientY - Y coordinate of zoom origin (screen space)
+     * @param {number} deltaZoom - Amount to zoom in/out
+     */
     zoomToPoint(clientX, clientY, deltaZoom) {
         const rect = this.container.getBoundingClientRect();
         const x = clientX - rect.left - rect.width / 2;
