@@ -410,8 +410,7 @@ class FullscreenImageZoom {
             
             const imageX = (this.initialPinchImagePercent.x - 0.5) * imgWidth;
             const imageY = (this.initialPinchImagePercent.y - 0.5) * imgHeight;
-            
-            // Calculate translation to keep the pinched point under fingers
+              // Calculate translation to keep the pinched point under fingers
             this.translateX = targetScreenX - (imageX * newZoom);
             this.translateY = targetScreenY - (imageY * newZoom);
             this.currentZoom = newZoom;
@@ -587,8 +586,7 @@ class FullscreenImageZoom {
         // Calculate what translation would put the image point at the target screen position
         const imgWidth = this.imageElement.naturalWidth;
         const imgHeight = this.imageElement.naturalHeight;
-        
-        const imageX = (imagePercent.x - 0.5) * imgWidth;
+          const imageX = (imagePercent.x - 0.5) * imgWidth;
         const imageY = (imagePercent.y - 0.5) * imgHeight;
         
         this.translateX = targetScreenX - (imageX * newZoom);
@@ -628,16 +626,94 @@ class FullscreenImageZoom {
         // This closes the fullscreen view.
         window.close();
     }
+      /**
+     * Calculate the allowed translation bounds based on current zoom level.
+     * 
+     * Determines the maximum and minimum translation values that will keep
+     * at least some part of the image visible within the viewport. For zoom
+     * levels below initial scale, constrains to center. For higher zoom levels,
+     * allows panning but prevents image from going completely out of bounds.
+     * 
+     * @return {Object} Bounds object: {minX, maxX, minY, maxY}
+     */    calculateBounds() {
+        // Get container dimensions
+        const containerWidth = window.innerWidth;
+        const containerHeight = window.innerHeight;
+        
+        // Get scaled image dimensions
+        const scaledWidth = this.imageElement.naturalWidth * this.currentZoom;
+        const scaledHeight = this.imageElement.naturalHeight * this.currentZoom;
+        
+        let minX, maxX, minY, maxY;
+        
+        // Always calculate bounds based on whether the scaled image is larger than the container
+        // not based on zoom level relative to initial scale
+        
+        // Ensure at least 100px of image remains visible on each side when panning is allowed
+        const minVisibleArea = 100;
+        
+        // Calculate bounds for X axis
+        if (scaledWidth <= containerWidth) {
+            // Image is smaller than or equal to container width - center it
+            minX = maxX = 0;
+        } else {
+            // Image is larger than container - allow panning but keep some visible
+            const halfScaledWidth = scaledWidth / 2;
+            const halfContainerWidth = containerWidth / 2;
+            const maxDistanceX = halfScaledWidth - halfContainerWidth;
+            const constrainedMaxX = Math.max(maxDistanceX - minVisibleArea, 0);
+            
+            minX = -constrainedMaxX;
+            maxX = constrainedMaxX;
+        }
+        
+        // Calculate bounds for Y axis
+        if (scaledHeight <= containerHeight) {
+            // Image is smaller than or equal to container height - center it
+            minY = maxY = 0;
+        } else {
+            // Image is larger than container - allow panning but keep some visible
+            const halfScaledHeight = scaledHeight / 2;
+            const halfContainerHeight = containerHeight / 2;
+            const maxDistanceY = halfScaledHeight - halfContainerHeight;
+            const constrainedMaxY = Math.max(maxDistanceY - minVisibleArea, 0);
+            
+            minY = -constrainedMaxY;
+            maxY = constrainedMaxY;
+        }
+        
+        return { minX, maxX, minY, maxY };
+    }
+    
+    /**
+     * Constrain translation values to stay within calculated bounds.
+     * 
+     * Applies bounds checking to current translateX and translateY values
+     * to ensure the image doesn't go completely out of view. Updates
+     * the instance translation properties with constrained values.
+     * 
+     * @return {void}
+     */
+    constrainTranslation() {
+        const bounds = this.calculateBounds();
+        
+        this.translateX = Math.max(bounds.minX, Math.min(bounds.maxX, this.translateX));
+        this.translateY = Math.max(bounds.minY, Math.min(bounds.maxY, this.translateY));
+    }
     
     /**
      * Apply current zoom and translation to image element.
      * 
      * Updates the CSS transform property with current translation
      * and scale values to visually update the image position.
+     * Applies bounds checking before updating transform.
      * 
      * @return {void}
      */
     updateTransform() {
+        // Apply bounds checking to prevent image from going out of bounds
+        this.constrainTranslation();
+        
         const transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.currentZoom})`;
         this.imageElement.style.transform = transform;
     }
