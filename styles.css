@@ -44,6 +44,11 @@ html, body {
     cursor: grabbing;
 }
 
+.image-container img.dragging {
+    cursor: grabbing !important;
+    transition: none !important;
+}
+
 /* Close button - top right */
 .close-btn {
     position: fixed;
@@ -94,13 +99,14 @@ html, body {
     font-family: Arial, sans-serif;
 }
 
-.zoom-btn:hover {
+.zoom-btn:hover:not(:disabled) {
     background: rgba(0, 0, 0, 0.9);
 }
 
 .zoom-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    background: rgba(0, 0, 0, 0.5);
 }
 
 .reset-btn {
@@ -114,4 +120,11 @@ html, body {
     width: 24px;
     height: 24px;
     flex-shrink: 0;
+}
+
+/* Prevent dragging on buttons */
+.close-btn,
+.zoom-btn {
+    pointer-events: auto;
+    user-select: none;
 }

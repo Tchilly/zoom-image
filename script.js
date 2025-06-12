@@ -52,26 +52,38 @@ class FullscreenImageZoom {
         const resetBtn = document.querySelector('.reset-btn');
         const closeBtn = document.querySelector('.close-btn');
         
-        zoomInBtn.addEventListener('click', () => this.zoomIn());
-        zoomOutBtn.addEventListener('click', () => this.zoomOut());
-        resetBtn.addEventListener('click', () => this.reset());
-        closeBtn.addEventListener('click', () => this.close());
+        zoomInBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.zoomIn();
+        });
+        zoomOutBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.zoomOut();
+        });
+        resetBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.reset();
+        });
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.close();
+        });
         
-        // Mouse events for desktop
-        this.imageElement.addEventListener('mousedown', (e) => this.startDrag(e));
+        // Mouse events for desktop - attach to container, not image
+        this.container.addEventListener('mousedown', (e) => this.startDrag(e));
         document.addEventListener('mousemove', (e) => this.drag(e));
-        document.addEventListener('mouseup', () => this.endDrag());
+        document.addEventListener('mouseup', (e) => this.endDrag(e));
         
         // Wheel zoom for desktop
         this.container.addEventListener('wheel', (e) => this.handleWheel(e));
         
         // Touch events for mobile
-        this.imageElement.addEventListener('touchstart', (e) => this.handleTouchStart(e));
-        this.imageElement.addEventListener('touchmove', (e) => this.handleTouchMove(e));
-        this.imageElement.addEventListener('touchend', () => this.handleTouchEnd());
+        this.container.addEventListener('touchstart', (e) => this.handleTouchStart(e));
+        this.container.addEventListener('touchmove', (e) => this.handleTouchMove(e));
+        this.container.addEventListener('touchend', (e) => this.handleTouchEnd(e));
         
         // Prevent context menu
-        this.imageElement.addEventListener('contextmenu', (e) => e.preventDefault());
+        this.container.addEventListener('contextmenu', (e) => e.preventDefault());
         
         // Prevent browser zoom
         this.preventBrowserZoom();
@@ -93,23 +105,35 @@ class FullscreenImageZoom {
     
     // Desktop mouse drag
     startDrag(e) {
+        // Don't start drag if clicking on buttons
+        if (e.target.closest('.close-btn') || e.target.closest('.zoom-controls')) {
+            return;
+        }
+        
+        e.preventDefault();
         this.isDragging = true;
         this.startX = e.clientX - this.translateX;
         this.startY = e.clientY - this.translateY;
-        this.imageElement.style.transition = 'none';
+        
+        this.imageElement.classList.add('dragging');
+        document.body.style.cursor = 'grabbing';
     }
     
     drag(e) {
         if (!this.isDragging) return;
         
+        e.preventDefault();
         this.translateX = e.clientX - this.startX;
         this.translateY = e.clientY - this.startY;
         this.updateTransform();
     }
     
-    endDrag() {
+    endDrag(e) {
+        if (!this.isDragging) return;
+        
         this.isDragging = false;
-        this.imageElement.style.transition = 'transform 0.2s ease-out';
+        this.imageElement.classList.remove('dragging');
+        document.body.style.cursor = '';
     }
     
     // Desktop wheel zoom
@@ -122,16 +146,22 @@ class FullscreenImageZoom {
     
     // Touch events for mobile
     handleTouchStart(e) {
+        // Don't handle touch on buttons
+        if (e.target.closest('.close-btn') || e.target.closest('.zoom-controls')) {
+            return;
+        }
+        
         if (e.touches.length === 1) {
             // Single touch - start panning
             this.isDragging = true;
             this.startX = e.touches[0].clientX - this.translateX;
             this.startY = e.touches[0].clientY - this.translateY;
-            this.imageElement.style.transition = 'none';
+            this.imageElement.classList.add('dragging');
         } else if (e.touches.length === 2) {
             // Two finger pinch
             e.preventDefault();
             this.isDragging = false;
+            this.imageElement.classList.remove('dragging');
             
             this.touchStartX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
             this.touchStartY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
@@ -142,6 +172,7 @@ class FullscreenImageZoom {
     handleTouchMove(e) {
         if (e.touches.length === 1 && this.isDragging) {
             // Single touch - pan
+            e.preventDefault();
             this.translateX = e.touches[0].clientX - this.startX;
             this.translateY = e.touches[0].clientY - this.startY;
             this.updateTransform();
@@ -162,9 +193,9 @@ class FullscreenImageZoom {
         }
     }
     
-    handleTouchEnd() {
+    handleTouchEnd(e) {
         this.isDragging = false;
-        this.imageElement.style.transition = 'transform 0.2s ease-out';
+        this.imageElement.classList.remove('dragging');
     }
     
     getTouchDistance(e) {
