@@ -52,21 +52,29 @@ class FullscreenImageZoom {
      * 
      * @return {void}
      */
-    init() {
+    init() {        
         this.setupEventListeners();
         
-        // Wait for image to load before calculating scale
-        if (this.imageElement.complete) {
+        // Initialize once image is ready
+        this.initializeImageScale();
+    }
+
+    /**
+     * Initialize image scale once the image is ready.
+     * 
+     * Handles both already-loaded images and images that need to load,
+     * then performs the initial setup sequence in a single elegant flow.
+     * 
+     * @return {void}
+     */
+    initializeImageScale() {
+        const setupImage = () => {
             this.calculateInitialScale();
             this.updateTransform();
             this.updateButtons();
-        } else {
-            this.imageElement.addEventListener('load', () => {
-                this.calculateInitialScale();
-                this.updateTransform();
-                this.updateButtons();
-            });
-        }
+        };
+
+        this.imageElement.complete ? setupImage() : this.imageElement.addEventListener('load', setupImage);
     }
       
     /**
@@ -449,7 +457,8 @@ class FullscreenImageZoom {
             e.touches[0].clientY - e.touches[1].clientY
         );
     }
-      /**
+      
+    /**
      * Zoom in by configured step amount.
      * 
      * Increases zoom level by zoomStep while respecting
@@ -458,6 +467,7 @@ class FullscreenImageZoom {
      * 
      * @return {void}
      */
+
     zoomIn() {
         // Calculate viewport center coordinates
         const centerX = window.innerWidth / 2;
