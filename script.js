@@ -14,14 +14,18 @@ class FullscreenImageZoom {
         this.translateX = 0;
         this.translateY = 0;
         this.initialScale = 1;
-        
-        // Touch/drag state
+          // Touch/drag state
         this.isDragging = false;
         this.startX = 0;
         this.startY = 0;
         this.lastTouchDistance = 0;
         this.touchStartX = 0;
         this.touchStartY = 0;
+          // Pinch gesture state
+        this.initialPinchCenter = { x: 0, y: 0 };
+        this.initialPinchImagePercent = { x: 0.5, y: 0.5 };
+        this.initialPinchZoom = 1;
+        this.initialPinchTranslate = { x: 0, y: 0 };
         
         this.init();
     }
@@ -286,23 +290,31 @@ class FullscreenImageZoom {
             this.isDragging = true;
             this.startX = e.touches[0].clientX - this.translateX;
             this.startY = e.touches[0].clientY - this.translateY;
-            this.imageElement.classList.add('dragging');
-        } else if (e.touches.length === 2) {
-            // Two finger pinch
+            this.imageElement.classList.add('dragging');        } else if (e.touches.length === 2) {
+            // Two finger pinch - initialize pinch state
             e.preventDefault();
             this.isDragging = false;
             this.imageElement.classList.remove('dragging');
             
-            this.touchStartX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-            this.touchStartY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            // Store initial pinch center as screen coordinates
+            const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+            const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            
+            // Convert to image percentage coordinates
+            const imagePercent = this.screenToImagePercent(centerX, centerY);
+            
+            this.initialPinchCenter = { x: centerX, y: centerY };
+            this.initialPinchImagePercent = imagePercent;
+            this.initialPinchZoom = this.currentZoom;
+            this.initialPinchTranslate = { x: this.translateX, y: this.translateY };
             this.lastTouchDistance = this.getTouchDistance(e);
         }
-    }
+    }    
     
     /**
      * Processes touch movement for either panning or pinch-to-zoom. For pinching,
-     * we continuously calculate the distance ratio between fingers to determine
-     * zoom level, and use the midpoint between fingers as the zoom origin.
+     * we use the initial pinch state to maintain consistent zoom center throughout
+     * the entire gesture, similar to how iPhone handles pinch-to-zoom.
      * @param {TouchEvent} e - The touchmove event
      */
     handleTouchMove(e) {
@@ -311,21 +323,42 @@ class FullscreenImageZoom {
             e.preventDefault();
             this.translateX = e.touches[0].clientX - this.startX;
             this.translateY = e.touches[0].clientY - this.startY;
-            this.updateTransform();
-        } else if (e.touches.length === 2) {
+            this.updateTransform();        } else if (e.touches.length === 2) {
             // Two finger pinch
             e.preventDefault();
             
             const currentDistance = this.getTouchDistance(e);
-            const scale = currentDistance / this.lastTouchDistance;
             
-            const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-            const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            // Only process if we have a valid initial distance
+            if (this.lastTouchDistance === 0) {
+                return;
+            }
             
-            const deltaZoom = (scale - 1) * this.currentZoom;
-            this.zoomToPoint(centerX, centerY, deltaZoom);
+            // Calculate scale factor from initial pinch distance
+            const scaleFromInitial = currentDistance / this.lastTouchDistance;
             
-            this.lastTouchDistance = currentDistance;
+            // Calculate new zoom level from initial state
+            const newZoom = Math.min(Math.max(this.initialPinchZoom * scaleFromInitial, this.minZoom), this.maxZoom);
+            
+            // Get container bounds for screen coordinate calculation
+            const rect = this.container.getBoundingClientRect();
+            const targetScreenX = this.initialPinchCenter.x - rect.left - rect.width / 2;
+            const targetScreenY = this.initialPinchCenter.y - rect.top - rect.height / 2;
+            
+            // Calculate where the pinched image point should be positioned
+            const imgWidth = this.imageElement.naturalWidth;
+            const imgHeight = this.imageElement.naturalHeight;
+            
+            const imageX = (this.initialPinchImagePercent.x - 0.5) * imgWidth;
+            const imageY = (this.initialPinchImagePercent.y - 0.5) * imgHeight;
+            
+            // Calculate translation to keep the pinched point under fingers
+            this.translateX = targetScreenX - (imageX * newZoom);
+            this.translateY = targetScreenY - (imageY * newZoom);
+            this.currentZoom = newZoom;
+            
+            this.updateTransform();
+            this.updateButtons();
         }
     }
     
@@ -358,29 +391,97 @@ class FullscreenImageZoom {
         this.currentZoom = zoom;
         this.updateTransform();
         this.updateButtons();
+    }    
+    
+    /**
+     * Converts screen coordinates to image-relative coordinates (0-1 range).
+     * This accounts for current zoom and translation to find what percentage 
+     * of the image the user is pointing at.
+     * @param {number} clientX - Screen X coordinate
+     * @param {number} clientY - Screen Y coordinate
+     * @returns {Object} - {x, y} as percentages (0-1) of image dimensions
+     */
+    screenToImagePercent(clientX, clientY) {
+        const rect = this.container.getBoundingClientRect();
+        
+        // Get screen coordinates relative to container center
+        const screenX = clientX - rect.left - rect.width / 2;
+        const screenY = clientY - rect.top - rect.height / 2;
+        
+        // Convert to image coordinates by accounting for current transform
+        const imageX = (screenX - this.translateX) / this.currentZoom;
+        const imageY = (screenY - this.translateY) / this.currentZoom;
+        
+        // Convert to percentage of image size
+        const imgWidth = this.imageElement.naturalWidth;
+        const imgHeight = this.imageElement.naturalHeight;
+        
+        const percentX = (imageX / imgWidth) + 0.5; // +0.5 because image center is at 0,0
+        const percentY = (imageY / imgHeight) + 0.5;
+        
+        return { x: percentX, y: percentY };
     }
     
     /**
-     * This is where the zoom-to-point magic happens. We calculate the offset from
-     * the zoom point to the center, then adjust our translation to keep that point
-     * visually stable during zoom. It's like pinning a spot on the image while
-     * everything else scales around it.
+     * Converts image percentage coordinates back to screen coordinates.
+     * @param {number} percentX - X percentage (0-1) of image
+     * @param {number} percentY - Y percentage (0-1) of image
+     * @param {number} zoom - Zoom level to use for calculation
+     * @param {number} translateX - Translation X to use
+     * @param {number} translateY - Translation Y to use
+     * @returns {Object} - {x, y} screen coordinates relative to container center
+     */
+    imagePercentToScreen(percentX, percentY, zoom, translateX, translateY) {
+        const imgWidth = this.imageElement.naturalWidth;
+        const imgHeight = this.imageElement.naturalHeight;
+        
+        // Convert percentage to image coordinates
+        const imageX = (percentX - 0.5) * imgWidth;
+        const imageY = (percentY - 0.5) * imgHeight;
+        
+        // Convert to screen coordinates
+        const screenX = (imageX * zoom) + translateX;
+        const screenY = (imageY * zoom) + translateY;
+        
+        return { x: screenX, y: screenY };
+    }
+
+    /**
+     * This is where the zoom-to-point magic happens. We calculate the image percentage
+     * that the user is pointing at, then adjust zoom and translation to keep that
+     * exact spot under their pointer/finger.
      * @param {number} clientX - X coordinate of zoom origin (screen space)
      * @param {number} clientY - Y coordinate of zoom origin (screen space)
      * @param {number} deltaZoom - Amount to zoom in/out
      */
     zoomToPoint(clientX, clientY, deltaZoom) {
-        const rect = this.container.getBoundingClientRect();
-        const x = clientX - rect.left - rect.width / 2;
-        const y = clientY - rect.top - rect.height / 2;
+        // Convert screen coordinates to image percentage
+        const imagePercent = this.screenToImagePercent(clientX, clientY);
         
+        const oldZoom = this.currentZoom;
         const newZoom = Math.min(Math.max(this.currentZoom + deltaZoom, this.minZoom), this.maxZoom);
-        const zoomRatio = newZoom / this.currentZoom;
         
-        this.translateX = this.translateX - (x * (zoomRatio - 1));
-        this.translateY = this.translateY - (y * (zoomRatio - 1));
+        // Only proceed if zoom actually changed
+        if (newZoom === oldZoom) {
+            return;
+        }
         
+        // Calculate where this image point should be on screen after zoom
+        const rect = this.container.getBoundingClientRect();
+        const targetScreenX = clientX - rect.left - rect.width / 2;
+        const targetScreenY = clientY - rect.top - rect.height / 2;
+        
+        // Calculate what translation would put the image point at the target screen position
+        const imgWidth = this.imageElement.naturalWidth;
+        const imgHeight = this.imageElement.naturalHeight;
+        
+        const imageX = (imagePercent.x - 0.5) * imgWidth;
+        const imageY = (imagePercent.y - 0.5) * imgHeight;
+        
+        this.translateX = targetScreenX - (imageX * newZoom);
+        this.translateY = targetScreenY - (imageY * newZoom);
         this.currentZoom = newZoom;
+        
         this.updateTransform();
         this.updateButtons();
     }
