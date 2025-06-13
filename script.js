@@ -123,12 +123,12 @@ class FullscreenImageZoom {
      * attached at document level to track drags outside container.
      * 
      * @return {void}
-     */
+     */      
     setupEventListeners() {
-        const zoomInBtn = document.querySelector('.zoom-controls .zoom-btn:first-child');
-        const zoomOutBtn = document.querySelector('.zoom-controls .zoom-btn:nth-child(2)');
-        const resetBtn = document.querySelector('.reset-btn');
-        const closeBtn = document.querySelector('.close-btn');
+        const zoomInBtn = document.querySelector('[data-action="zoom-in"]');
+        const zoomOutBtn = document.querySelector('[data-action="zoom-out"]');
+        const resetBtn = document.querySelector('[data-action="reset"]');
+        const closeBtn = document.querySelector('[data-action="close"]');
         
         zoomInBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -261,10 +261,10 @@ class FullscreenImageZoom {
      * 
      * @param {MouseEvent} e - The mouse down event object
      * @return {void}
-     */
+     */    
     startDrag(e) {
         // Don't start drag if clicking on buttons
-        if (e.target.closest('.close-btn') || e.target.closest('.zoom-controls')) {
+        if (e.target.closest('[data-action]') || e.target.closest('.zoom-controls')) {
             return;
         }
         
@@ -338,10 +338,10 @@ class FullscreenImageZoom {
      * 
      * @param {TouchEvent} e - The touch start event object
      * @return {void}
-     */
+     */    
     handleTouchStart(e) {
         // Don't handle touch on buttons
-        if (e.target.closest('.close-btn') || e.target.closest('.zoom-controls')) {
+        if (e.target.closest('[data-action]') || e.target.closest('.zoom-controls')) {
             return;
         }
         
@@ -746,10 +746,10 @@ class FullscreenImageZoom {
      * current zoom level relative to min/max limits.
      * 
      * @return {void}
-     */
+     */    
     updateButtons() {
-        const zoomInBtn = document.querySelector('.zoom-controls .zoom-btn:first-child');
-        const zoomOutBtn = document.querySelector('.zoom-controls .zoom-btn:nth-child(2)');
+        const zoomInBtn = document.querySelector('[data-action="zoom-in"]');
+        const zoomOutBtn = document.querySelector('[data-action="zoom-out"]');
         
         zoomInBtn.disabled = this.currentZoom >= this.maxZoom;
         zoomOutBtn.disabled = this.currentZoom <= this.minZoom;

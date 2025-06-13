@@ -22,9 +22,8 @@
           tabindex="0"
         />
       </div>
-
-      <!-- Close button - top right -->
-      <button class="close-btn" aria-label="Stäng helskärmsläge (Escape)">
+      
+      <button class="close-btn" data-action="close" aria-label="Stäng helskärmsläge (Escape)">
         <span>Stäng Helskärm</span>
         <svg
           width="24"
@@ -45,9 +44,8 @@
         </svg>
       </button>
 
-      <!-- Zoom controls - bottom center -->
       <div class="zoom-controls" role="toolbar" aria-label="Zoomkontroller">
-        <button class="zoom-btn" aria-label="Zooma in">
+        <button class="zoom-btn" data-action="zoom-in" aria-label="Zooma in">
           <svg
             width="24"
             height="24"
@@ -68,7 +66,7 @@
           <span class="sr-only">Zooma in</span>
         </button>
 
-        <button class="zoom-btn" aria-label="Zooma ut">
+        <button class="zoom-btn" data-action="zoom-out" aria-label="Zooma ut">
           <svg
             width="24"
             height="24"
@@ -91,6 +89,7 @@
 
         <button
           class="zoom-btn reset-btn"
+          data-action="reset"
           aria-label="Återställ zoom till ursprunglig storlek"
         >
           <span>Återställ</span>
