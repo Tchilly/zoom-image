@@ -20,6 +20,7 @@ class FullscreenImageZoom {
         this.maxZoom = 5;
         this.zoomStep = 0.5;
         this.absoluteMinZoom = 0.25; // Hard minimum to prevent extreme zoom out
+        this.initialFitMode = 'cover'; // 'cover' fills viewport, 'contain' fits entire image
         
         // State
         this.currentZoom = 1;
@@ -75,17 +76,19 @@ class FullscreenImageZoom {
         };
 
         this.imageElement.complete ? setupImage() : this.imageElement.addEventListener('load', setupImage);
-    }
-      
+    }        
+    
     /**
-     * Calculate the initial scale to make image cover viewport.
+     * Calculate the initial scale based on configured fit mode.
      * 
-     * Determines the scale factor needed to ensure the image fills
-     * the entire viewport without letterboxing (black bars).
-     * Uses the larger of width/height scale ratios.
+     * Determines the scale factor for initial display:
+     * - 'cover': Image fills entire viewport (may crop edges)
+     * - 'contain': Entire image is visible within viewport
+     * 
+     * Always allows zooming out to see the whole image regardless of initial mode.
      * 
      * @return {void}
-     */
+     */    
     calculateInitialScale() {
         // Use window dimensions for more reliable mobile viewport
         const containerWidth = window.innerWidth;
@@ -105,13 +108,21 @@ class FullscreenImageZoom {
         const scaleX = containerWidth / imgWidth;
         const scaleY = containerHeight / imgHeight;
         
-        // Use the larger scale to cover the screen
-        this.initialScale = Math.max(scaleX, scaleY);
+        // Set initial scale based on configured fit mode
+        if (this.initialFitMode === 'cover') {
+            // Use the larger scale to fill the viewport (may crop image)
+            this.initialScale = Math.max(scaleX, scaleY);
+        } else {
+            // Use the smaller scale to fit the entire image within the viewport
+            this.initialScale = Math.min(scaleX, scaleY);
+        }
+        
         this.currentZoom = this.initialScale;
         
-        // Adjust minZoom to ensure we can always zoom from initial scale
-        // Use the smaller of: configured minZoom or initialScale, but never below absoluteMinZoom
-        this.minZoom = Math.max(Math.min(0.5, this.initialScale), this.absoluteMinZoom);
+        // Always set minZoom to allow seeing the entire image
+        // This ensures you can zoom out to see the whole image regardless of initial mode
+        const fitToViewportScale = Math.min(scaleX, scaleY);
+        this.minZoom = fitToViewportScale;
         
     }
     
@@ -163,11 +174,15 @@ class FullscreenImageZoom {
         
         // Prevent context menu
         this.container.addEventListener('contextmenu', (e) => e.preventDefault());
-        
-        // Handle viewport changes on mobile
+          // Handle viewport changes on mobile
         window.addEventListener('resize', () => {
             this.calculateInitialScale();
-            this.reset();
+            // Ensure current zoom respects new minimum zoom after resize
+            if (this.currentZoom < this.minZoom) {
+                this.currentZoom = this.minZoom;
+            }
+            this.updateTransform();
+            this.updateButtons();
         });
         
         this.preventBrowserZoom();
@@ -457,7 +472,26 @@ class FullscreenImageZoom {
             e.touches[0].clientY - e.touches[1].clientY
         );
     }
-      
+        
+    /**
+     * Get dynamic zoom step based on current zoom level.
+     * 
+     * Uses smaller steps when zoomed out for finer control,
+     * and larger steps when zoomed in for faster navigation.
+     * 
+     * @return {number} The zoom step to use
+     */
+    getDynamicZoomStep() {
+        // Use smaller steps when close to minimum zoom for better control
+        if (this.currentZoom <= this.minZoom + 0.3) {
+            return 0.1;
+        } else if (this.currentZoom <= 1) {
+            return 0.2;
+        } else {
+            return this.zoomStep; // Use default for higher zoom levels
+        }
+    }
+
     /**
      * Zoom in by configured step amount.
      * 
@@ -466,15 +500,15 @@ class FullscreenImageZoom {
      * Announces change for accessibility.
      * 
      * @return {void}
-     */
-
+     */    
     zoomIn() {
         // Calculate viewport center coordinates
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 2;
         
-        // Use zoomToPoint to zoom toward viewport center
-        this.zoomToPoint(centerX, centerY, this.zoomStep);
+        // Use dynamic zoom step for better control
+        const step = this.getDynamicZoomStep();
+        this.zoomToPoint(centerX, centerY, step);
         this.announceZoom();
     }
     
@@ -492,8 +526,9 @@ class FullscreenImageZoom {
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 2;
         
-        // Use zoomToPoint to zoom away from viewport center
-        this.zoomToPoint(centerX, centerY, -this.zoomStep);
+        // Use dynamic zoom step for better control
+        const step = this.getDynamicZoomStep();
+        this.zoomToPoint(centerX, centerY, -step);
         this.announceZoom();
     }
     
