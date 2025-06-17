@@ -41,6 +41,8 @@ class FullscreenImageZoom {
         this.initialPinchImagePercent = { x: 0.5, y: 0.5 };
         this.initialPinchZoom = 1;
         this.initialPinchTranslate = { x: 0, y: 0 };
+          // Zoom indicator elements
+        this.zoomIndicator = document.querySelector('.zoom-indicator');
         
         this.init();
     }
@@ -67,8 +69,7 @@ class FullscreenImageZoom {
      * then performs the initial setup sequence in a single elegant flow.
      * 
      * @return {void}
-     */
-    initializeImageScale() {
+     */    initializeImageScale() {
         const setupImage = () => {
             this.calculateInitialScale();
             this.updateTransform();
@@ -76,7 +77,7 @@ class FullscreenImageZoom {
         };
 
         this.imageElement.complete ? setupImage() : this.imageElement.addEventListener('load', setupImage);
-    }        
+    }
     
     /**
      * Calculate the initial scale based on configured fit mode.
@@ -173,8 +174,7 @@ class FullscreenImageZoom {
         this.container.addEventListener('touchend', (e) => this.handleTouchEnd(e));
         
         // Prevent context menu
-        this.container.addEventListener('contextmenu', (e) => e.preventDefault());
-          // Handle viewport changes on mobile
+        this.container.addEventListener('contextmenu', (e) => e.preventDefault());        // Handle viewport changes on mobile
         window.addEventListener('resize', () => {
             this.calculateInitialScale();
             // Ensure current zoom respects new minimum zoom after resize
@@ -775,10 +775,11 @@ class FullscreenImageZoom {
     }
     
     /**
-     * Update zoom control button states.
+     * Update zoom control button states and zoom indicator.
      * 
      * Enables/disables zoom in and zoom out buttons based on
-     * current zoom level relative to min/max limits.
+     * current zoom level relative to min/max limits, and updates
+     * the zoom indicator.
      * 
      * @return {void}
      */    
@@ -788,8 +789,44 @@ class FullscreenImageZoom {
         
         zoomInBtn.disabled = this.currentZoom >= this.maxZoom;
         zoomOutBtn.disabled = this.currentZoom <= this.minZoom;
+        
+        // Update zoom indicator
+        this.updateZoomIndicator();
     }
-    
+      /**
+     * Update zoom indicator visibility.
+     * 
+     * Shows indicator when image is cropped (zoomed beyond fit-to-viewport scale).
+     * The indicator is now a static picture-in-picture icon.
+     * 
+     * @return {void}
+     */
+    updateZoomIndicator() {
+        if (!this.zoomIndicator) return;
+        
+        // Get container and image dimensions
+        const containerWidth = window.innerWidth;
+        const containerHeight = window.innerHeight;
+        const imgWidth = this.imageElement.naturalWidth;
+        const imgHeight = this.imageElement.naturalHeight;
+        
+        if (imgWidth === 0 || imgHeight === 0) return;
+        
+        // Calculate the scale needed to fit entire image in viewport
+        const scaleX = containerWidth / imgWidth;
+        const scaleY = containerHeight / imgHeight;
+        const fitToViewportScale = Math.min(scaleX, scaleY);
+        
+        // Show indicator only when image is cropped (zoom > fit scale)
+        const isCropped = this.currentZoom > fitToViewportScale;
+        
+        if (isCropped) {
+            this.zoomIndicator.classList.add('visible');
+        } else {
+            this.zoomIndicator.classList.remove('visible');
+        }
+    }
+
     /**
      * Announce zoom level changes for screen readers.
      * 
